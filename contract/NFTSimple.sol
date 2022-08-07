@@ -2,7 +2,7 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
-contract Lion {
+contract NFTSimple {
 
     string public name = "klayLion";
     //uint256 public totalSupply = 10;
@@ -83,5 +83,17 @@ contract Lion {
     function setTokenUri(uint256 id, string memory uri) public {
         tokenURIs[id] = uri;
 
+    }
+}
+
+
+// 발행한 토큰을 이 컨트랙트로 보낼수 있음. 
+contract NFTMarket {
+
+    function buyNFT(uint256 tokenId, address NFTAddress, address to ) public returns(bool) {
+
+        NFTSimple(NFTAddress).safeTransferFrom(address(this), to, tokenId);
+
+        return true;
     }
 }
