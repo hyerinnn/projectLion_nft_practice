@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity >=0.4.24 <=0.5.6;
 
 contract NFTSimple {
 
@@ -14,6 +14,7 @@ contract NFTSimple {
 
     //소유한 토큰 리스트
     mapping (address => uint256[]) private _ownedTokens;
+    bytes4 private constant _KIP17_RECEIVED = 0x6745782b;
 
  /*
     constructor()  {
@@ -42,7 +43,7 @@ contract NFTSimple {
         return true;
     }
 
-    function safeTransferFrom(address from, address to, uint256 tokenId) public{
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) public{
         // 보낸사람이 from 주소와 똑같아야함
         require(from == msg.sender, "from != msg.sender");
         // 보낸사람이 토큰 소유주여야 함
@@ -52,8 +53,57 @@ contract NFTSimple {
         _ownedTokens[to].push(tokenId);
         
         tokenOwner[tokenId] = to;
-    
+
+        // 만약에 받는 쪽이 실행할 코드가 있는 스마트 컨트랙트이면 코드를 실행할것
+        require(
+            _checkOnKIP17Received(from, to, tokenId, _data),
+            "KIP17: transfer to non KIP17Receiver implementer"
+        );
+
     }
+
+    function _checkOnKIP17Received( address from, address to, uint256 tokenId, bytes memory _data) internal returns (bool) {
+        bool success;
+        bytes memory returndata;
+
+        if (!isContract(to)) {
+            return true;
+        }
+
+        (success, returndata) = to.call(
+            abi.encodeWithSelector(
+                _KIP17_RECEIVED,
+                msg.sender,
+                from,
+                tokenId,
+                _data
+            )
+        );
+        if (
+            returndata.length != 0 &&
+            abi.decode(returndata, (bytes4)) == _KIP17_RECEIVED
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    // address에 코드가 있는지 없는지를 판별해서 스마트 컨트랙트인지 판별
+    function isContract(address account) internal view returns (bool) {
+
+
+        uint256 size;
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            size := extcodesize(account)
+        }
+        return size > 0;
+    }
+
+
+
+
 
     // 소유한 리스트에서 토큰 삭제
     function _removeTokenFromList(address from, uint256 tokenId) private {
@@ -90,10 +140,32 @@ contract NFTSimple {
 // 발행한 토큰을 이 컨트랙트로 보낼수 있음. 
 contract NFTMarket {
 
-    function buyNFT(uint256 tokenId, address NFTAddress, address to ) public returns(bool) {
+    // 토큰 판매자
+    mapping(uint256  => address) public seller;
 
-        NFTSimple(NFTAddress).safeTransferFrom(address(this), to, tokenId);
+    // 토큰 구매
+    function buyNFT(uint256 tokenId, address NFT) public  returns(bool) {
+        //판매한 사람한테 0.01클레이 전송
+        // payable을 붙어야만 돈을 보낼 수 있음
+        address payable receiver = address(uint160(seller[tokenId]));
+
+        // 10  **  18peb = 1 klay
+        // 10  **  16peb = 0.01klay
+        receiver.transfer(10 ** 16);
+
+
+        NFTSimple(NFT).safeTransferFrom(address(this), msg.sender , tokenId,  "0x00");
 
         return true;
     }
+
+    // 마켓이 토큰을 받았을 때  판매자가 누구인지 기록해야함
+    function onKIP17Received(address operator, address from, uint256 tokenId, bytes memory data) public returns (bytes4) {
+
+        seller[tokenId] = from;
+
+        return bytes4(keccak256("onKIP17Received(address,address,uint256,bytes)"));
+
+    }
+
 }
