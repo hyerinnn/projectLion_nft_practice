@@ -6,9 +6,9 @@ import Caver from 'caver-js';
 // 2. caver.js로 컨트랙트 연동
 // 3. 가져온 컨트랙트 실행 결과를 웹에 표현하기
 
-const COUNT_CONTRACT_ADDRESS='0x2bAe5b449433301B9678fea81fA421EfC8b31c1b';
-const ACCESS_KEY_ID = 'KASK8WXCV29NGFTS9S78Z15I';
-const SECRET_ACCESS_KEY = 'cPqKDyw_dfpkPnDO91s813zQ-7-Rod1oTUzD7KD7';
+const COUNT_CONTRACT_ADDRESS='COUNT_CONTRACT_ADDRESS';
+const ACCESS_KEY_ID = 'ACCESS_KEY_ID';
+const SECRET_ACCESS_KEY = 'SECRET_ACCESS_KEY';
 const CHAIN_ID ='1001'; // mainnet: 8217 / testnet:1001
 const COUNT_ABI = '[ { "inputs": [], "name": "count", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getBlockNumber", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "_count", "type": "uint256" } ], "name": "setCount", "outputs": [], "stateMutability": "nonpayable", "type": "function" } ]'
 
